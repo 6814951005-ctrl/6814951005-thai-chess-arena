@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>กระดานหมากรุกไทย</title>
+  <style>
+    :root { --ink:#f7f1e3; --muted:#b9aa94; --paper:#181511; --panel:#242019; --gold:#d4a754; --dark:#75503b; --light:#e8cf9c; --move:#62a773; --capture:#d96257; }
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 15%,#3a3025 0,transparent 28%),#100e0b;color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;display:grid;place-items:center;padding:24px}
+    .app{width:min(100%,980px);display:grid;grid-template-columns:minmax(280px,620px) minmax(260px,1fr);gap:26px;align-items:center}.brand{grid-column:1/-1;display:flex;align-items:end;justify-content:space-between;border-bottom:1px solid #4b4033;padding-bottom:16px}.brand p{color:var(--muted);margin:0}.brand h1{font-family:Georgia,"Noto Serif Thai",serif;margin:0;font-size:clamp(1.7rem,5vw,2.6rem);letter-spacing:.02em}.board-wrap{position:relative;aspect-ratio:1;box-shadow:0 20px 50px #0008;border:10px solid #513825;border-radius:4px;overflow:hidden}.board{width:100%;height:100%;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)}.square{border:0;position:relative;display:grid;place-items:center;padding:0;background:var(--light);cursor:pointer;font-size:clamp(1.65rem,6vw,4rem);line-height:1;transition:filter .12s}.square.dark{background:var(--dark)}.square:hover{filter:brightness(1.08)}.square.selected{box-shadow:inset 0 0 0 4px #f4cd6d}.square.legal::after{content:"";width:22%;aspect-ratio:1;border-radius:50%;background:#294e30bb;position:absolute}.square.capture::after{content:"";position:absolute;inset:7%;border:4px solid var(--capture);border-radius:50%}.piece{position:relative;z-index:1;filter:drop-shadow(0 2px 1px #0008)}.white{color:#fff8e8;text-shadow:0 1px 0 #403427}.black{color:#1b1713;text-shadow:0 1px 0 #d6bea2}.coord{position:absolute;font-size:10px;font-weight:700;color:#fff8e8a8;bottom:3px;right:4px}.square:nth-child(8n+1) .coord{left:4px;right:auto}.sidebar{background:var(--panel);border:1px solid #4b4033;border-radius:12px;padding:22px;min-height:430px;display:flex;flex-direction:column;gap:18px}.turn{display:flex;align-items:center;gap:10px;background:#15120e;border-radius:9px;padding:13px}.dot{width:13px;height:13px;border-radius:50%;background:#f8f2e5;box-shadow:0 0 0 3px #fff2}.dot.blackdot{background:#201b17}.status{margin:0;font-weight:700}.hint{color:var(--muted);font-size:.93rem;line-height:1.55;margin:0}.moves{background:#17130f;border-radius:8px;min-height:112px;max-height:212px;overflow:auto;padding:10px;color:#d5c4aa;font: .82rem ui-monospace,monospace;line-height:1.8}.moves span{display:inline-block;width:50%}.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}button.action{appearance:none;border:1px solid #796243;border-radius:7px;background:#30271d;color:var(--ink);font:inherit;padding:11px;cursor:pointer}button.action.primary{background:var(--gold);border-color:#e9c779;color:#251a0d;font-weight:700}.rule{font-size:.8rem;color:#b9aa94;border-top:1px solid #4b4033;padding-top:14px;line-height:1.55}.rule b{color:#e6d2ad}@media(max-width:720px){body{padding:14px}.app{grid-template-columns:1fr;gap:17px}.brand{align-items:start;gap:12px;flex-direction:column}.sidebar{min-height:0}.board-wrap{max-width:620px;width:100%;justify-self:center}.moves{max-height:120px}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="brand"><div><h1>หมากรุกไทย</h1><p>Makruk · กระดานสำหรับเล่นสองคน</p></div><p id="gameType">กติกาไทยดั้งเดิม</p></header>
+    <section class="board-wrap" aria-label="กระดานหมากรุกไทย"><div class="board" id="board"></div></section>
+    <aside class="sidebar">
+      <div class="turn"><i class="dot" id="dot"></i><p class="status" id="status">ตาของฝ่ายขาว</p></div>
+      <p class="hint" id="hint">เลือกตัวหมาก แล้วเลือกช่องที่ต้องการเดิน</p>
+      <div class="moves" id="moves" aria-label="ประวัติการเดิน">เริ่มเกมใหม่แล้ว</div>
+      <div class="controls"><button class="action primary" id="newGame">เริ่มเกมใหม่</button><button class="action" id="flip">กลับกระดาน</button></div>
+      <div class="rule"><b>กติกาย่อ:</b> เบี้ยเดินหน้า 1 ช่องและกินทแยง · โคนเดินทแยง 1 ช่องหรือเดินหน้า 1 ช่อง · เม็ดเดินทแยง 1 ช่อง · เมื่อเบี้ยถึงแถวที่ 3 จะเปลี่ยนเป็นเม็ด</div>
+    </aside>
+  </main>
+<script>
+const icons={K:'♚',Q:'♛',R:'♜',N:'♞',B:'♝',P:'♟'};
+const thai={K:'ขุน',Q:'เม็ด',R:'เรือ',N:'ม้า',B:'โคน',P:'เบี้ย'};
+const files='abcdefgh'; let board,turn,selected=null,legal=[],flipped=false,history=[],over=false;
+function fresh(){return [
+ ['R','N','B','Q','K','B','N','R'],Array(8).fill('P'),...Array.from({length:4},()=>Array(8).fill(null)),Array(8).fill('p'),['r','n','b','q','k','b','n','r']
+ ]}
+function init(){board=fresh();turn='w';selected=null;history=[];over=false;render();}
+function color(p){return p===p?.toUpperCase()?'b':'w'}
+function inside(r,c){return r>=0&&r<8&&c>=0&&c<8} function enemy(p,a){return p&&color(p)!==a}
+function pseudo(r,c,state=board){const p=state[r][c],side=color(p),t=p.toUpperCase(),dir=side==='w'?-1:1,res=[]; const add=(rr,cc)=>{if(inside(rr,cc)&&(!state[rr][cc]||enemy(state[rr][cc],side)))res.push([rr,cc])};
+ if(t==='P'){if(inside(r+dir,c)&&!state[r+dir][c])res.push([r+dir,c]); for(const d of [-1,1])if(inside(r+dir,c+d)&&enemy(state[r+dir][c+d],side))res.push([r+dir,c+d])}
+ if(t==='N')for(const [a,b] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])add(r+a,c+b);
+ if(t==='K'||t==='Q'||t==='B'){let dirs=[];if(t==='K')dirs=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]; if(t==='Q')dirs=[[-1,-1],[-1,1],[1,-1],[1,1]]; if(t==='B')dirs=[[-1,-1],[-1,1],[1,-1],[1,1],[dir,0]];dirs.forEach(([a,b])=>add(r+a,c+b));}
+ if(t==='R')for(const [a,b] of [[-1,0],[1,0],[0,-1],[0,1]]){for(let rr=r+a,cc=c+b;inside(rr,cc);rr+=a,cc+=b){if(!state[rr][cc])res.push([rr,cc]);else{if(enemy(state[rr][cc],side))res.push([rr,cc]);break}}}
+ return res; }
+function attacked(r,c,by,state=board){for(let i=0;i<8;i++)for(let j=0;j<8;j++)if(state[i][j]&&color(state[i][j])===by&&pseudo(i,j,state).some(([a,b])=>a===r&&b===c))return true;return false}
+function checked(side,state=board){let king=null;for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(state[r][c]===(side==='w'?'k':'K'))king=[r,c];return king?attacked(king[0],king[1],side==='w'?'b':'w',state):true}
+function allowed(r,c){return pseudo(r,c).filter(([rr,cc])=>{let s=board.map(x=>x.slice());s[rr][cc]=s[r][c];s[r][c]=null;return !checked(turn,s)})}
+function notation(r,c){return files[c]+(8-r)}
+function move(r,c,rr,cc){let p=board[r][c],taken=board[rr][cc];board[rr][cc]=p;board[r][c]=null;let promo=p.toUpperCase()==='P'&&((color(p)==='w'&&rr===2)||(color(p)==='b'&&rr===5));if(promo)board[rr][cc]=color(p)==='w'?'q':'Q';history.push(`${history.length+1}. ${thai[p.toUpperCase()]} ${notation(r,c)}–${notation(rr,cc)}${taken?' ×':''}${promo?' = เม็ด':''}`);turn=turn==='w'?'b':'w';selected=null;legal=[];let any=false;for(let i=0;i<8;i++)for(let j=0;j<8;j++)if(board[i][j]&&color(board[i][j])===turn&&allowed(i,j).length)any=true; if(!any){over=true;document.getElementById('status').textContent=checked(turn)?`รุกจน! ฝ่าย${turn==='w'?'ดำ':'ขาว'}ชนะ`:'เสมอ — ไม่มีทางเดิน';}render()}
+function click(r,c){if(over)return;let p=board[r][c];if(selected&&legal.some(([a,b])=>a===r&&b===c)){move(...selected,r,c);return}if(p&&color(p)===turn){selected=[r,c];legal=allowed(r,c)}else{selected=null;legal=[]}render()}
+function render(){let el=document.getElementById('board');el.innerHTML='';let rows=[...Array(8).keys()],cols=[...Array(8).keys()];if(flipped){rows.reverse();cols.reverse()}for(const r of rows)for(const c of cols){let sq=document.createElement('button');sq.className='square '+((r+c)%2?'dark':'');if(selected?.[0]===r&&selected?.[1]===c)sq.classList.add('selected');let hit=legal.some(([a,b])=>a===r&&b===c);if(hit)sq.classList.add(board[r][c]?'capture':'legal');sq.onclick=()=>click(r,c);if(board[r][c]){let pc=document.createElement('span');pc.className='piece '+(color(board[r][c])==='w'?'white':'black');pc.textContent=icons[board[r][c].toUpperCase()];pc.title=thai[board[r][c].toUpperCase()];sq.append(pc)}if(c===0){let co=document.createElement('small');co.className='coord';co.textContent=8-r;sq.append(co)}if(r===7){let co=document.createElement('small');co.className='coord';co.textContent=files[c];sq.append(co)}el.append(sq)}let isCheck=!over&&checked(turn);document.getElementById('status').textContent=isCheck?`ฝ่าย${turn==='w'?'ขาว':'ดำ'} ถูก รุก!`:`ตาของฝ่าย${turn==='w'?'ขาว':'ดำ'}`;document.getElementById('dot').className='dot '+(turn==='b'?'blackdot':'');document.getElementById('hint').textContent=over?'กด “เริ่มเกมใหม่” เพื่อเริ่มการแข่งขันอีกครั้ง':isCheck?'ต้องป้องกันขุนให้พ้นจากการรุก':'เลือกตัวหมาก แล้วเลือกช่องที่ต้องการเดิน';document.getElementById('moves').innerHTML=history.length?history.map(x=>`<span>${x}</span>`).join(''):'เริ่มเกมใหม่แล้ว';}
+document.getElementById('newGame').onclick=init;document.getElementById('flip').onclick=()=>{flipped=!flipped;render()};init();
+</script>
+</body></html>
