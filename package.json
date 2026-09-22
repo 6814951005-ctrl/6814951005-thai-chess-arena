@@ -1,6 +1,7 @@
 {
   "name": "thai-chess-arena",
   "private": true,
+  "type": "module",
   "workspaces": ["client", "server"],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace client\"",

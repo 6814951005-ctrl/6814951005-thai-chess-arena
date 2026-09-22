@@ -5,16 +5,34 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { createServer } from 'node:http';
+import { resolve } from 'node:path';
 import { Server } from 'socket.io';
+import { fileURLToPath } from 'node:url';
 import Game from './models/Game.js';
 import User from './models/User.js';
 
 const app = express();
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' } });
 const jwtSecret = process.env.JWT_SECRET || 'change-this-secret-in-production';
+const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/thai-chess-arena';
+let databaseConnection;
+
+const connectDatabase = () => {
+  if (mongoose.connection.readyState === 1) return Promise.resolve();
+  databaseConnection ??= mongoose.connect(mongoUri).catch(err => {
+    databaseConnection = undefined;
+    throw err;
+  });
+  return databaseConnection;
+};
+
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' }));
 app.use(express.json());
+app.use(async (_req, _res, next) => {
+  try { await connectDatabase(); next(); } catch (err) { next(err); }
+});
 
 const publicUser = (user) => ({ id: user._id, name: user.name, email: user.email });
 const createToken = (user) => jwt.sign({ sub: user._id.toString(), email: user.email }, jwtSecret, { expiresIn: '7d' });
@@ -107,6 +125,10 @@ io.on('connection', socket => {
   });
 });
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/thai-chess-arena')
-  .then(() => httpServer.listen(process.env.PORT || 3000, () => console.log('API ready on port 3000')))
-  .catch(err => { console.error('MongoDB connection failed:', err.message); process.exit(1); });
+export { app };
+
+if (isMain) {
+  connectDatabase()
+    .then(() => httpServer.listen(process.env.PORT || 3000, () => console.log('API ready on port 3000')))
+    .catch(err => { console.error('MongoDB connection failed:', err.message); process.exit(1); });
+}
