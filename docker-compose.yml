@@ -1,0 +1,28 @@
+name: myapp
+
+services:
+  backend:
+    build: ./server
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: "postgresql://cpe:1234@db:5432/mydb?schema=public"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./client
+    ports:
+      - "3333:3000"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: cpe
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
