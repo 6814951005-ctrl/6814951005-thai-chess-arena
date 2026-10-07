@@ -126,6 +126,7 @@ io.on('connection', socket => {
 });
 
 export { app };
+export default app;
 
 if (isMain) {
   connectDatabase()
