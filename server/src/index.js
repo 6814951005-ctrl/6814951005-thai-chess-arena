@@ -16,7 +16,7 @@ const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(pro
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' } });
 const jwtSecret = process.env.JWT_SECRET || 'change-this-secret-in-production';
-const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/thai-chess-arena';
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/thai-chess-arena';
 let databaseConnection;
 
 const connectDatabase = () => {
